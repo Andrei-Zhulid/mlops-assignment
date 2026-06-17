@@ -1,4 +1,4 @@
-"""Phase 1 smoke test: fire 5 questions from the eval set at vLLM directly.
+"""Phase 1 vLLM test: fire 5 questions from the eval set at vLLM directly.
 
 Calls the OpenAI-compatible /chat/completions endpoint with a minimal
 text-to-SQL prompt and prints the generated SQL. Does NOT use the agent graph
@@ -6,8 +6,8 @@ text-to-SQL prompt and prints the generated SQL. Does NOT use the agent graph
 returning sensible output.
 
 Usage:
-    uv run python scripts/smoke_test.py
-    uv run python scripts/smoke_test.py --n 3 --url http://localhost:8000/v1
+    uv run python scripts/vllm_test.py
+    uv run python scripts/vllm_test.py --n 3 --url http://localhost:8000/v1
 """
 from __future__ import annotations
 

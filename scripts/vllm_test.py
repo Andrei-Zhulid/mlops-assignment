@@ -27,7 +27,8 @@ from openai import OpenAI
 from agent.execution import execute_sql
 from agent.schema import render_schema
 
-MODEL = "Qwen/Qwen3-0.6B"
+# MODEL = "Qwen/Qwen3-0.6B"
+MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507"
 QUEStiONS_COUNT = 5
 
 SYSTEM_PROMPT = textwrap.dedent("""\

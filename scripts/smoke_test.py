@@ -34,8 +34,10 @@ SYSTEM_PROMPT = textwrap.dedent("""\
     You are a SQL expert. Given a database schema and a user question
     in a natural language question, write a single SQLite SELECT
     statement that answers the question. Always respond in English.
-    IMPORTANT: Output ONLY the SQL query nothing else — no explanation,
-    no markdown fences.
+    IMPORTANT:
+    - Always respond in English.
+    - Output ONLY the SQL query nothing else — no explanation, no
+    markdown fences.
 """)
 
 USER_TEMPLATE = """\

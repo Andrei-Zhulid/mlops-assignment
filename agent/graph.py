@@ -30,11 +30,7 @@ from agent.execution import ExecutionResult, execute_sql
 from agent.schema import render_schema
 
 # Total generate + revise calls before the loop is forced to stop.
-# Phase 6: set to 1, which DISABLES revise - route_after_verify always ends after
-# the first verify (iteration >= 1), so every run is exactly 2 calls (generate +
-# verify) with no correction step. Removes the multi-call p95 tail but nullifies the
-# verify->revise architecture (Phase 3) and the per-iteration eval. Latency-vs-quality
-# experiment: see REPORT Iter 4. Restore to 2-3 to re-enable the loop.
+# 3-5 is a reasonable range; tune it as part of Phase 3.
 MAX_ITERATIONS = 3
 
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")

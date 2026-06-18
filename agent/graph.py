@@ -30,8 +30,10 @@ from agent.execution import ExecutionResult, execute_sql
 from agent.schema import render_schema
 
 # Total generate + revise calls before the loop is forced to stop.
-# 3-5 is a reasonable range; tune it as part of Phase 3.
-MAX_ITERATIONS = 3
+# Phase 6: lowered 3->2 to cap the worst-case run at 4 sequential LLM calls
+# (gen + 1 revise + 2 verify) instead of 6, trimming the p95 tail. Costs the
+# 3rd attempt - justified only if per-iteration pass rate shows iter 2 rarely helps.
+MAX_ITERATIONS = 2
 
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
 VLLM_MODEL = os.environ.get("VLLM_MODEL", "Qwen/Qwen3-30B-A3B-Instruct-2507")

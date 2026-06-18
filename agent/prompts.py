@@ -30,27 +30,35 @@ Question: {question}
 Write the SQLite query that answers the question."""
 
 
-# verify_node passes {question}, {sql}, {result}.
+# verify_node passes {schema}, {question}, {sql}, {result}.
 VERIFY_SYSTEM = (
-    "You are a meticulous SQL reviewer. You are given an English question, "
-    "the SQL that was run to answer it, and the result of running that SQL "
-    "against the database. Decide whether the result plausibly answers the "
-    "question.\n"
-    "Flag the answer as NOT plausible when:\n"
-    "- the SQL errored (the result starts with ERROR), or\n"
-    "- zero rows came back but the question clearly implies rows should "
-    "exist, or\n"
-    "- the returned columns plainly do not answer what was asked (e.g. the "
-    "question asks for a name but only an id was selected), or\n"
-    "- the query obviously aggregates, filters, or orders in a way that "
-    "contradicts the question.\n"
-    "Be lenient otherwise: a plausible-looking non-empty result that matches "
-    "the question's intent is OK. Do not nitpick formatting.\n"
+    "You are a strict SQL reviewer for a text-to-SQL system. You see the "
+    "database schema, the English question, the SQL that was run, and the "
+    "result of running it. Decide whether the result correctly and completely "
+    "answers the question.\n"
+    "Mark NOT ok when any of these hold:\n"
+    "- the SQL errored (the result starts with ERROR);\n"
+    "- zero rows came back but the question implies at least one row exists;\n"
+    "- the SELECTed columns don't match what the question asks for (asks for a "
+    "name/address but returns an id; asks for one value but returns many);\n"
+    "- given the schema, the query used the wrong table/column, or a filter "
+    "literal that doesn't match the question;\n"
+    "- the aggregation/grouping/ordering/LIMIT contradicts the question "
+    '("top N" without ORDER BY ... LIMIT N, "average" via SUM, "how many" '
+    "without COUNT).\n"
+    "If it genuinely looks correct, say ok - don't invent problems.\n"
+    "When NOT ok, the issue MUST be specific and actionable: name the exact "
+    "column/table/filter/clause that is wrong and what it should be instead, "
+    "so the next step can fix it in one shot. Vague issues like 'result seems "
+    "wrong' are useless.\n"
     'Respond with ONLY a JSON object: {"ok": <true|false>, "issue": '
-    '"<short reason, empty string if ok>"}.'
+    '"<specific actionable fix instruction; empty string if ok>"}.'
 )
 
 VERIFY_USER = """\
+Database schema:
+{schema}
+
 Question: {question}
 
 SQL that was run:
@@ -59,7 +67,7 @@ SQL that was run:
 Execution result:
 {result}
 
-Is this a plausible answer to the question? Respond with the JSON object only."""
+Does this correctly and completely answer the question? Respond with the JSON object only."""
 
 
 # revise_node passes {schema}, {question}, {sql}, {result}, {issue}.
@@ -69,7 +77,8 @@ REVISE_SYSTEM = (
     "the failing SQL, its execution result, and the reviewer's complaint, "
     "write a corrected single SQLite SELECT statement.\n"
     "Rules:\n"
-    "- Address the reviewer's complaint directly.\n"
+    "- Resolve the complaint by CHANGING what it points at (the table, column, "
+    "filter, join, or clause) - do not just rephrase the same query.\n"
     "- Use ONLY tables and columns that appear in the schema.\n"
     "- Quote identifiers with double quotes when they contain spaces or are "
     "reserved words.\n"

@@ -55,13 +55,17 @@ class AgentState:
     history: list[dict[str, Any]] = field(default_factory=list)
 
 
-def llm() -> ChatOpenAI:
-    """Chat client pointed at VLLM_BASE_URL (your local vLLM by default)."""
+def llm(temperature: float = 0.0) -> ChatOpenAI:
+    """Chat client pointed at VLLM_BASE_URL (your local vLLM by default).
+
+    Greedy (temperature=0.0) by default. revise samples hotter so it diverges
+    from generate's greedy answer instead of re-emitting it.
+    """
     return ChatOpenAI(
         model=VLLM_MODEL,
         base_url=VLLM_BASE_URL,
         api_key=LLM_API_KEY,
-        temperature=0.0,
+        temperature=temperature,
     )
 
 
@@ -152,6 +156,7 @@ def verify_node(state: AgentState) -> dict:
     response = llm().invoke([
         ("system", prompts.VERIFY_SYSTEM),
         ("user", prompts.VERIFY_USER.format(
+            schema=state.schema,
             question=state.question,
             sql=state.sql,
             result=result,
@@ -180,7 +185,7 @@ def revise_node(state: AgentState) -> dict:
     Return: {"sql": <str>, "iteration": state.iteration + 1, ...}.
     """
     result = state.execution.render() if state.execution else "ERROR: no execution result"
-    response = llm().invoke([
+    response = llm(temperature=0.5).invoke([
         ("system", prompts.REVISE_SYSTEM),
         ("user", prompts.REVISE_USER.format(
             schema=state.schema,

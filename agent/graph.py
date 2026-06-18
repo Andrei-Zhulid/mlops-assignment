@@ -35,7 +35,7 @@ from agent.schema import render_schema
 # verify) with no correction step. Removes the multi-call p95 tail but nullifies the
 # verify->revise architecture (Phase 3) and the per-iteration eval. Latency-vs-quality
 # experiment: see REPORT Iter 4. Restore to 2-3 to re-enable the loop.
-MAX_ITERATIONS = 2
+MAX_ITERATIONS = 3
 
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
 VLLM_MODEL = os.environ.get("VLLM_MODEL", "Qwen/Qwen3-30B-A3B-Instruct-2507")

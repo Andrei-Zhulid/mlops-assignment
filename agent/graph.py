@@ -55,17 +55,21 @@ class AgentState:
     history: list[dict[str, Any]] = field(default_factory=list)
 
 
-def llm(temperature: float = 0.0) -> ChatOpenAI:
+def llm(temperature: float = 0.0, max_tokens: int = 256) -> ChatOpenAI:
     """Chat client pointed at VLLM_BASE_URL (your local vLLM by default).
 
     Greedy (temperature=0.0) by default. revise samples hotter so it diverges
     from generate's greedy answer instead of re-emitting it.
+
+    max_tokens caps the output: SQL and verdicts are short, so a tight cap kills
+    the long-output tail that dominates decode time / P95 latency (Phase 6).
     """
     return ChatOpenAI(
         model=VLLM_MODEL,
         base_url=VLLM_BASE_URL,
         api_key=LLM_API_KEY,
         temperature=temperature,
+        max_tokens=max_tokens,
     )
 
 
@@ -153,7 +157,7 @@ def verify_node(state: AgentState) -> dict:
     in the README.
     """
     result = state.execution.render() if state.execution else "ERROR: no execution result"
-    response = llm().invoke([
+    response = llm(max_tokens=64).invoke([
         ("system", prompts.VERIFY_SYSTEM),
         ("user", prompts.VERIFY_USER.format(
             schema=state.schema,

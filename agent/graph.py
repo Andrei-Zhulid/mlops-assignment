@@ -30,10 +30,12 @@ from agent.execution import ExecutionResult, execute_sql
 from agent.schema import render_schema
 
 # Total generate + revise calls before the loop is forced to stop.
-# Phase 6: lowered 3->2 to cap the worst-case run at 4 sequential LLM calls
-# (gen + 1 revise + 2 verify) instead of 6, trimming the p95 tail. Costs the
-# 3rd attempt - justified only if per-iteration pass rate shows iter 2 rarely helps.
-MAX_ITERATIONS = 2
+# Phase 6: set to 1, which DISABLES revise - route_after_verify always ends after
+# the first verify (iteration >= 1), so every run is exactly 2 calls (generate +
+# verify) with no correction step. Removes the multi-call p95 tail but nullifies the
+# verify->revise architecture (Phase 3) and the per-iteration eval. Latency-vs-quality
+# experiment: see REPORT Iter 4. Restore to 2-3 to re-enable the loop.
+MAX_ITERATIONS = 1
 
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
 VLLM_MODEL = os.environ.get("VLLM_MODEL", "Qwen/Qwen3-30B-A3B-Instruct-2507")
@@ -191,7 +193,7 @@ async def revise_node(state: AgentState) -> dict:
     Return: {"sql": <str>, "iteration": state.iteration + 1, ...}.
     """
     result = state.execution.render() if state.execution else "ERROR: no execution result"
-    response = await llm(temperature=0.5).ainvoke([
+    response = await llm(temperature=0).ainvoke([
         ("system", prompts.REVISE_SYSTEM),
         ("user", prompts.REVISE_USER.format(
             schema=state.schema,

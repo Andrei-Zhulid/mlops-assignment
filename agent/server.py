@@ -53,7 +53,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/answer", response_model=AnswerResponse)
-def answer(req: AnswerRequest) -> AnswerResponse:
+async def answer(req: AnswerRequest) -> AnswerResponse:
     state = AgentState(question=req.question, db_id=req.db)
     config: dict[str, Any] = {
         "callbacks": [_lf_handler] if _lf_handler is not None else [],
@@ -61,7 +61,9 @@ def answer(req: AnswerRequest) -> AnswerResponse:
         "tags": [f"{k}:{v}" for k, v in req.tags.items()],
     }
     try:
-        final = graph.invoke(state, config=config)
+        # ainvoke + async LLM nodes: network waits yield to the event loop, so
+        # one process holds many runs concurrently instead of one-per-thread.
+        final = await graph.ainvoke(state, config=config)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
 
